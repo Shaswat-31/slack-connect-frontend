@@ -175,7 +175,7 @@ const handleSchedule = async () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.accessToken}`,
       },
-      body: JSON.stringify({ channelId: selectedChannel, message, postAt: scheduleDate, userType: senderType }),
+      body: JSON.stringify({ channelId: selectedChannel, message, postAt: new Date(scheduleDate).toISOString(), userType: senderType }),
     });
 
     if (!res.ok) throw new Error("Failed to schedule message");
