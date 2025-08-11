@@ -2,17 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the project.
+2. run npm i
+3. make env - NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
+NEXTAUTH_SECRET=super-secret-nextauth-key
+4. run npm run dev
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+   frontend live url : https://slack-connect-frontend-flame.vercel.app
+   backend live url: https://slack-connect-backend-tau.vercel.app
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
