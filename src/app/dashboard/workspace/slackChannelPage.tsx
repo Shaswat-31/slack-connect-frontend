@@ -12,6 +12,7 @@ import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useSpeechToText from 'react-hook-speech-to-text';
 import { MdLightbulbOutline } from "react-icons/md";
+import { toast } from "sonner";
 
 type Channel = { id: string; name: string };
 type Message = {
@@ -90,7 +91,9 @@ const SlackChannelPage = () => {
   useEffect(() => {
     if (results.length > 0) {
       // Join all transcripts together
-      const transcript = results.map((r) => r.transcript).join(" ");
+      const transcript = results
+  .map((r) => (typeof r === "string" ? r : r.transcript))
+  .join(" ");
       setMessage(transcript);
     }
   }, [results]);
@@ -134,39 +137,61 @@ const SlackChannelPage = () => {
       setMessage("");
       // Refresh messages
       setSelectedChannel(selectedChannel);
+      toast.success("Message sent")
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }finally{
       setRefetch(!refetch)
       setLoading(false);
     }
   };
 
-  const handleSchedule = async () => {
-    try {
-      setLoading(true);
-      const session = await getSession();
-      if (!session?.accessToken) return;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/slack/schedule/message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: JSON.stringify({ channelId: selectedChannel, message, postAt: scheduleDate, userType:senderType }),
-      });
-      if (!res.ok) throw new Error("Failed to schedule message");
-      setMessage("");
-      setScheduleDate("");
-      // Refresh messages
-      setSelectedChannel(selectedChannel);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    }finally{
-      setRefetch(!refetch)
-      setLoading(false);
+const handleSchedule = async () => {
+  try {
+    if (!scheduleDate) {
+      toast.error("Please select a schedule date and time.");
+      return;
     }
-  };
+    console.log(scheduleDate);
+    const scheduledTime = new Date(scheduleDate).getTime();
+    console.log(scheduledTime);
+    const nowPlus2Min = Date.now() + 2 * 60 * 1000; // current time + 2 minutes in ms
+
+    if (scheduledTime < nowPlus2Min) {
+      toast.error("Scheduled time must be at least 2 minutes from now.");
+      return;
+    }
+
+    setLoading(true);
+    const session = await getSession();
+    if (!session?.accessToken) {
+      toast.error("Unauthorized. Please login again.");
+      return;
+    }
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/slack/schedule/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+      body: JSON.stringify({ channelId: selectedChannel, message, postAt: scheduleDate, userType: senderType }),
+    });
+
+    if (!res.ok) throw new Error("Failed to schedule message");
+
+    setMessage("");
+    setScheduleDate("");
+    // Refresh messages
+    setSelectedChannel(selectedChannel);
+    toast.success("Message scheduled!");
+  } catch (err: any) {
+    toast.error(`Error: ${err.message}`);
+  } finally {
+    setRefetch(!refetch);
+    setLoading(false);
+  }
+};
 
    const handleGenerate = async () => {
     if (!message.trim()) return;
@@ -189,11 +214,13 @@ const SlackChannelPage = () => {
       // Assuming the API returns { generated: "some text" }
       if (data.generated) {
         setMessage(data.generated.content);
+        toast.success("Message Improved!")
       } else {
         console.error("No generated content in response");
       }
     } catch (error) {
       console.error("Error calling AI API:", error);
+      toast.error("Something went wrong!");
     } finally {
       setLoading(false);
     }
@@ -436,9 +463,9 @@ const SlackChannelPage = () => {
         type="button"
       >
         {isRecording ? (
-          <StopCircle className="w-6 h-6 text-red-600" />
+          <StopCircle className="w-6 h-6 text-red-600 cursor-pointer" />
         ) : (
-          <Mic className="w-6 h-6 text-gray-700" />
+          <Mic className="w-6 h-6 text-gray-700 cursor-pointer" />
         )}
       </button>
 
@@ -483,7 +510,7 @@ const SlackChannelPage = () => {
     .slice(0, 16)}
 />
         <Button
-          className="mt-4 w-full bg-[#611f69]"
+          className="mt-4 w-full bg-[#611f69] cursor-pointer"
           onClick={handleSchedule}
           disabled={!scheduleDate || !message.trim() || loading}
         >

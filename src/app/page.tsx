@@ -12,7 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { MaterialInput } from "@/components/ui/material-input";
 import Image from "next/image";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-
+import { toast } from "sonner";
 // Zod schemas
 const loginSchema = z.object({
   email: z.email().min(1,{ message: "Invalid email address" }),
@@ -72,7 +72,7 @@ export default function AuthPage() {
     if (res?.ok) {
       router.push("/dashboard");
     } else {
-      alert("Login failed");
+      toast.error("Login failed");
       setLoading(false);
     }
   };
@@ -87,11 +87,11 @@ export default function AuthPage() {
       });
 
       if (res.ok) {
-        alert("Registration successful! You can now log in.");
+        toast.success("Registration successful! You can now log in.");
         await onLoginSubmit({email:data.email, password:data.password});
         setIsLogin(true);
       } else {
-        alert("Registration failed");
+        toast.error("Registration failed");
       }
     } catch (error) {
       console.error(error);
