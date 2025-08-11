@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getSession, signIn, signOut } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import SlackChannelPage from "./workspace/slackChannelPage";
+import { useRouter, useSearchParams } from "next/navigation";
 import SlackConnectPage from "./_components/slackConnectPage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,8 @@ const Dashboard = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
+  const router = useRouter();
+
 
   useEffect(() => {
     const redirected = searchParams.get("redirected");
@@ -25,7 +26,7 @@ const Dashboard = () => {
           getSession().then((sess) => {
             setSession(sess);
             setLoading(false);
-            window.location.href = "/dashboard";
+            router.push("/dashboard");
           });
         });
       } else {

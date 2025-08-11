@@ -1,11 +1,17 @@
-"use client"
-import React from 'react'
-import SlackChannelPage from './slackChannelPage'
+"use client";
 
-const page = () => {
+import dynamic from "next/dynamic";
+
+const SlackChannelPage = dynamic(() => import("./slackChannelPage"), {
+  ssr: false,
+});
+
+const Page = () => {
   return (
-    <SlackChannelPage/>
-  )
-}
+    <div>
+      <SlackChannelPage />
+    </div>
+  );
+};
 
-export default page
+export default Page;
