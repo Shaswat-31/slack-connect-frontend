@@ -396,14 +396,30 @@ const handleSchedule = async () => {
 </div>
 
             {/* Cancel Button if scheduled & in future */}
-            {isScheduled && isFuture && (
-              <button
-                onClick={handleCancel}
-                className="mt-1 self-start px-3 py-0.5 text-xs bg-[#f21300] text-white rounded-full hover:bg-red-600 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-            )}
+           {isScheduled && isFuture && (
+  <div className="flex items-center gap-4 mt-2">
+    <button
+      onClick={handleCancel}
+      className="
+        px-4 py-1 text-sm font-semibold
+        bg-red-600 text-white rounded-full
+        hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500
+        transition
+        cursor-pointer
+        shadow-sm
+      "
+      aria-label="Cancel scheduled message"
+    >
+      Cancel
+    </button>
+    <time
+      dateTime={msg.postAt || ""}
+      className="text-gray-500 text-xs font-mono select-none"
+    >
+      {new Date(msg.postAt || "").toLocaleString()}
+    </time>
+  </div>
+)}
           </div>
         </div>
       );
