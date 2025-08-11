@@ -344,6 +344,7 @@ const handleSchedule = async () => {
                 : m
             )
           );
+          toast.success("Message cancelled!")
         } catch (error) {
           console.error("Error canceling message:", error);
         }
