@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Send, Clock, LogOut, User, Bot } from "lucide-react";
+import { Loader2, Send, Clock, LogOut, User, Bot, StopCircle, Mic } from "lucide-react";
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import useSpeechToText from 'react-hook-speech-to-text';
+import { MdLightbulbOutline } from "react-icons/md";
 
 type Channel = { id: string; name: string };
 type Message = {
@@ -72,6 +74,26 @@ const SlackChannelPage = () => {
     fetchChannels();
   }, []);
 
+  const {
+    err,
+    interimResult,
+    isRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText,
+  } = useSpeechToText({
+    continuous: true,
+    useLegacyResults: false
+  });
+
+  // Update message as results come in
+  useEffect(() => {
+    if (results.length > 0) {
+      // Join all transcripts together
+      const transcript = results.map((r) => r.transcript).join(" ");
+      setMessage(transcript);
+    }
+  }, [results]);
   // Fetch messages when channel changes
   useEffect(() => {
     if (!selectedChannel) return;
@@ -142,6 +164,37 @@ const SlackChannelPage = () => {
       alert(`Error: ${err.message}`);
     }finally{
       setRefetch(!refetch)
+      setLoading(false);
+    }
+  };
+
+   const handleGenerate = async () => {
+    if (!message.trim()) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/slack/message/ai`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: message }),
+        }
+      );
+
+      if (!res.ok) throw new Error("API request failed");
+
+      const data = await res.json();
+
+      // Assuming the API returns { generated: "some text" }
+      if (data.generated) {
+        setMessage(data.generated.content);
+      } else {
+        console.error("No generated content in response");
+      }
+    } catch (error) {
+      console.error("Error calling AI API:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -318,7 +371,7 @@ const SlackChannelPage = () => {
             {isScheduled && isFuture && (
               <button
                 onClick={handleCancel}
-                className="mt-2 self-start px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition"
+                className="mt-1 self-start px-3 py-0.5 text-xs bg-[#f21300] text-white rounded-full hover:bg-red-600 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -338,32 +391,63 @@ const SlackChannelPage = () => {
  <div className="flex items-center gap-3">
   <label className="text-sm font-medium text-gray-700">Send as:</label>
   <Select value={senderType} onValueChange={setSenderType}>
-    <SelectTrigger className="w-[160px] border-gray-300 focus:ring-2 focus:ring-purple-500">
+    <SelectTrigger className="w-[160px] border-gray-300 focus:ring-2 focus:ring-purple-500 cursor-pointer">
       <SelectValue placeholder="Select sender" />
     </SelectTrigger>
-    <SelectContent side="top" className="bg-white">
+    <SelectContent side="top" className="bg-white cursor-pointer">
       <SelectItem value="user">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer">
           <User className="w-4 h-4 text-gray-600" /> User
         </div>
       </SelectItem>
       <SelectItem value="bot">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer">
           <Bot className="w-4 h-4 text-gray-600" /> Bot
         </div>
       </SelectItem>
     </SelectContent>
   </Select>
+   <button
+      onClick={handleGenerate}
+      disabled={loading || !message.trim()}
+      aria-label="Improve sentence with AI"
+      title="Improve sentence"
+      className="p-2 rounded hover:bg-gray-200 cursor-pointer"
+      type="button"
+    >
+      <MdLightbulbOutline size={24} color={loading ? "gray" : "orange"} />
+    </button>
 </div>
 
   {/* Row 2: Message Input & Actions */}
   <div className="flex gap-2">
-    <Input
-      placeholder={`Type your message as ${senderType}...`}
-      value={message}
-      onChange={(e) => setMessage(e.target.value)}
-      className="flex-1"
-    />
+     <Input
+        placeholder={`Type your message as ${senderType}...`}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        className="flex-1"
+      />
+
+      {/* Mic button */}
+      <button
+        onClick={isRecording ? stopSpeechToText : startSpeechToText}
+        className="flex items-center justify-center p-2 rounded-md bg-gray-200 hover:bg-gray-300"
+        aria-label={isRecording ? "Stop recording" : "Start recording"}
+        type="button"
+      >
+        {isRecording ? (
+          <StopCircle className="w-6 h-6 text-red-600" />
+        ) : (
+          <Mic className="w-6 h-6 text-gray-700" />
+        )}
+      </button>
+
+      {/* Visual indicator while recording */}
+      {isRecording && (
+        <span className="ml-1 text-red-600 font-semibold animate-pulse">
+          Listening...
+        </span>
+      )}
 
     {/* Send Now Button */}
     <Button
