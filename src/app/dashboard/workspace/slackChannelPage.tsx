@@ -31,7 +31,7 @@ const SlackChannelPage = () => {
   const [message, setMessage] = useState("");
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setError] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [senderType,setSenderType]=useState("user");
   const [refetch,setRefetch]=useState(false);
@@ -75,7 +75,7 @@ const SlackChannelPage = () => {
   }, []);
 
   const {
-    err,
+    error,
     interimResult,
     isRecording,
     results,
