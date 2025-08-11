@@ -91,10 +91,11 @@ export default function AuthPage() {
         await onLoginSubmit({email:data.email, password:data.password});
         setIsLogin(true);
       } else {
-        toast.error("Registration failed");
+        toast.error("Registration failed try with different email");
       }
     } catch (error) {
       console.error(error);
+       toast.error("Registration failed try with different email");
     }
     finally{
       setLoading(false);
